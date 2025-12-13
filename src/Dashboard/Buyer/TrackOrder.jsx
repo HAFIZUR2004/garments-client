@@ -1,121 +1,129 @@
+// src/pages/dashboard/TrackOrder.jsx
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axiosSecure from "../../hooks/useAxiosSecure";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
 import { toast } from "react-hot-toast";
 
-const AdminTrackOrder = () => {
+const TrackOrder = () => {
   const { orderId } = useParams();
+  const axiosSecure = useAxiosSecure();
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [trackingSteps, setTrackingSteps] = useState([]);
-  const [currentLocation, setCurrentLocation] = useState("");
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         setLoading(true);
-        const { data } = await axiosSecure.get(`/api/orders/my-orders/${orderId}`);
-        setOrder(data);
-        setTrackingSteps(data.trackingSteps || []);
-        setCurrentLocation(data.currentLocation || "");
-      } catch (err) {
-        toast.error("Failed to fetch order!");
+        const { data } = await axiosSecure.get(
+          `/api/orders/track/${orderId}`
+        );
+
+        // sort steps by date + time (chronological)
+        const sortedSteps = (data.trackingSteps || []).sort(
+          (a, b) =>
+            new Date(`${a.date} ${a.time}`) -
+            new Date(`${b.date} ${b.time}`)
+        );
+
+        setOrder({ ...data, trackingSteps: sortedSteps });
+      } catch (error) {
+        toast.error("Failed to load tracking info");
       } finally {
         setLoading(false);
       }
     };
+
     fetchOrder();
-  }, [orderId]);
+  }, [orderId, axiosSecure]);
 
-  const addStep = () => {
-    setTrackingSteps([...trackingSteps, { title: "", date: "", time: "", location: "", notes: "" }]);
-  };
+  if (loading) {
+    return <p className="text-center mt-10">Loading tracking info...</p>;
+  }
 
-  const updateStep = (idx, key, value) => {
-    const updated = [...trackingSteps];
-    updated[idx][key] = value;
-    setTrackingSteps(updated);
-  };
+  if (!order) {
+    return <p className="text-center mt-10">Order not found</p>;
+  }
 
-  const removeStep = (idx) => {
-    const updated = [...trackingSteps];
-    updated.splice(idx, 1);
-    setTrackingSteps(updated);
-  };
-
-  const saveSteps = async () => {
-    try {
-      await axiosSecure.patch(`/api/orders/track/${orderId}`, {
-        trackingSteps,
-        currentLocation,
-      });
-      toast.success("Tracking updated!");
-    } catch (err) {
-      toast.error("Failed to update tracking!");
-    }
-  };
-
-  if (loading) return <p>Loading...</p>;
+  const lastIndex = order.trackingSteps.length - 1;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Admin Track Order #{orderId}</h2>
+    <div className="max-w-4xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-2">
+        Track Order #{order._id}
+      </h2>
 
-      <div className="mb-4">
-        <label className="font-semibold">Current Location:</label>
-        <input
-          type="text"
-          value={currentLocation}
-          onChange={(e) => setCurrentLocation(e.target.value)}
-          className="border p-2 w-full"
-        />
+      <p className="mb-6 text-gray-600">
+        Product: <span className="font-medium">{order.productTitle}</span>
+      </p>
+
+      {/* ===== Timeline ===== */}
+      <div className="relative border-l-2 border-gray-300 pl-6">
+        {order.trackingSteps.map((step, index) => {
+          const isLatest = index === lastIndex;
+
+          return (
+            <div key={index} className="mb-8 relative">
+              {/* Dot */}
+              <span
+                className={`absolute -left-[11px] top-1 w-5 h-5 rounded-full 
+                ${
+                  isLatest
+                    ? "bg-green-600 ring-4 ring-green-200"
+                    : "bg-gray-400"
+                }`}
+              ></span>
+
+              {/* Content */}
+              <div
+                className={`p-4 rounded-md shadow 
+                ${
+                  isLatest
+                    ? "border border-green-500 bg-green-50"
+                    : "bg-white"
+                }`}
+              >
+                <h3 className="text-lg font-semibold">
+                  {step.status}
+                </h3>
+
+                <p className="text-sm text-gray-500">
+                  📅 {step.date} ⏰ {step.time}
+                </p>
+
+                <p className="text-sm mt-1">
+                  📍 Location:{" "}
+                  <span className="font-medium">{step.location}</span>
+                </p>
+
+                {step.notes && (
+                  <p className="text-sm mt-2 text-gray-700">
+                    📝 {step.notes}
+                  </p>
+                )}
+
+                {step.image && (
+                  <img
+                    src={step.image}
+                    alt="tracking"
+                    className="mt-3 w-40 rounded"
+                  />
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <h3 className="text-xl font-bold mb-2">Tracking Steps</h3>
-      {trackingSteps.map((step, idx) => (
-        <div key={idx} className="border p-3 mb-2 rounded">
-          <input
-            type="text"
-            placeholder="Title"
-            value={step.title}
-            onChange={(e) => updateStep(idx, "title", e.target.value)}
-            className="border p-1 w-full mb-1"
-          />
-          <input
-            type="date"
-            value={step.date}
-            onChange={(e) => updateStep(idx, "date", e.target.value)}
-            className="border p-1 w-full mb-1"
-          />
-          <input
-            type="time"
-            value={step.time}
-            onChange={(e) => updateStep(idx, "time", e.target.value)}
-            className="border p-1 w-full mb-1"
-          />
-          <input
-            type="text"
-            placeholder="Location"
-            value={step.location}
-            onChange={(e) => updateStep(idx, "location", e.target.value)}
-            className="border p-1 w-full mb-1"
-          />
-          <input
-            type="text"
-            placeholder="Notes"
-            value={step.notes}
-            onChange={(e) => updateStep(idx, "notes", e.target.value)}
-            className="border p-1 w-full mb-1"
-          />
-          <button onClick={() => removeStep(idx)} className="bg-red-500 text-white px-3 py-1 rounded">Remove</button>
+      {/* ===== Current Location ===== */}
+      {order.currentLocation && (
+        <div className="mt-8 p-4 bg-blue-50 border border-blue-300 rounded">
+          <h4 className="font-semibold mb-1">📍 Current Location</h4>
+          <p>{order.currentLocation}</p>
         </div>
-      ))}
-
-      <button onClick={addStep} className="bg-blue-500 text-white px-3 py-1 rounded mb-4">Add Step</button>
-      <br />
-      <button onClick={saveSteps} className="bg-green-500 text-white px-4 py-2 rounded">Save Tracking</button>
+      )}
     </div>
   );
 };
 
-export default AdminTrackOrder;
+export default TrackOrder;

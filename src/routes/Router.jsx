@@ -33,6 +33,8 @@ import PrivateRoute from "../components/PrivateRoute.jsx";
 import AdminRoute from "../components/AdminRoute.jsx";
 import ManagerRoute from "../components/ManagerRoute.jsx";
 import BuyerRoute from "../components/BuyerRoute.jsx";
+import ApprovedOrders from "../Dashboard/Manager/approved-orders.jsx";
+import PendingOrders from "../Dashboard/Manager/pending-orders.jsx";
 
 export const router = createBrowserRouter([
   // ================= PUBLIC ROUTES =================
@@ -98,6 +100,22 @@ export const router = createBrowserRouter([
           </ManagerRoute>
         ),
       },
+      {
+        path: "PendingOrders",
+        element: (
+          <ManagerRoute>
+            <PendingOrders/>
+          </ManagerRoute>
+        ),
+      },
+      {
+        path: "ApprovedOrders",
+        element: (
+          <ManagerRoute>
+            <ApprovedOrders/>
+          </ManagerRoute>
+        ),
+      },
 
       // ========== BUYER ROUTES ==========
       {
@@ -125,7 +143,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "track-order/:orderId",
+        path: "/dashboard/track-order/:orderId",
         element: (
           <BuyerRoute>
             <TrackOrder />

@@ -3,17 +3,19 @@ import React, { useState, useContext } from "react";
 import Swal from "sweetalert2";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthProvider";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Login = () => {
   const navigate = useNavigate();
   const { loginUser, googleLogin } = useContext(AuthContext);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const backendUrl = "http://localhost:5000"; // তোমার backend URL
+  const [showPassword, setShowPassword] = useState(false);
 
-  // -----------------------------
+  const backendUrl = "http://localhost:5000";
+
   // 🔑 Email & Password Login
-  // -----------------------------
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -21,7 +23,6 @@ const Login = () => {
       const token = await userCredential.user.getIdToken(true);
       localStorage.setItem("token", token);
 
-      // ✅ MongoDB User Check / Create if not exist
       const res = await fetch(`${backendUrl}/api/users/by-email/${email}`);
       if (!res.ok) {
         await fetch(`${backendUrl}/api/users/register`, {
@@ -37,23 +38,22 @@ const Login = () => {
       }
 
       Swal.fire("Success!", "Login Successful", "success");
-      navigate("/"); // redirect home
+      navigate("/");
     } catch (err) {
       Swal.fire("Error", err.message, "error");
     }
   };
 
-  // -----------------------------
   // 🔑 Google Login
-  // -----------------------------
   const handleGoogleLogin = async () => {
     try {
       const result = await googleLogin();
       const token = await result.user.getIdToken(true);
       localStorage.setItem("token", token);
 
-      // ✅ MongoDB User Check / Create
-      const res = await fetch(`${backendUrl}/api/users/by-email/${result.user.email}`);
+      const res = await fetch(
+        `${backendUrl}/api/users/by-email/${result.user.email}`
+      );
       if (!res.ok) {
         await fetch(`${backendUrl}/api/users/register`, {
           method: "POST",
@@ -88,15 +88,29 @@ const Login = () => {
             className="border p-2 rounded"
             required
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border p-2 rounded"
-            required
-          />
-          <button type="submit" className="bg-blue-600 text-white p-2 rounded">
+
+          {/* 🔐 Password with Show/Hide */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="border p-2 rounded w-full pr-10"
+              required
+            />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-600"
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            className="bg-blue-600 text-white p-2 rounded"
+          >
             Login
           </button>
         </form>

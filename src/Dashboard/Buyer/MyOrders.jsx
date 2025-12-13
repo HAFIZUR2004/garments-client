@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import axios from "axios";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
 import ConfirmModal from "../../components/orders/ConfirmModal";
 import OrderTimeline from "../../components/orders/OrderTimeline";
+import { toast } from "react-hot-toast";
 
 const MyOrders = () => {
   const { firebaseUser } = useAuth();
+  const axiosSecure = useAxiosSecure();
+
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancelId, setCancelId] = useState(null);
@@ -14,16 +17,15 @@ const MyOrders = () => {
   const fetchOrders = async () => {
     if (!firebaseUser) return;
     setLoading(true);
-
     try {
       const token = await firebaseUser.getIdToken();
-      const res = await axios.get(
-        `http://localhost:5000/api/orders/my-orders/${firebaseUser.uid}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await axiosSecure.get(`/api/orders/my-orders/${firebaseUser.uid}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setOrders(res.data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to fetch orders");
     } finally {
       setLoading(false);
     }
@@ -35,18 +37,17 @@ const MyOrders = () => {
 
   const cancelOrder = async () => {
     if (!cancelId) return;
-
     try {
       const token = await firebaseUser.getIdToken();
-      await axios.patch(
-        `http://localhost:5000/api/orders/cancel/${cancelId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axiosSecure.patch(`/api/orders/cancel/${cancelId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Order cancelled successfully");
       setCancelId(null);
       fetchOrders();
     } catch (err) {
-      console.error(err.response?.data || err.message);
+      console.error(err);
+      toast.error("Failed to cancel order");
     }
   };
 
@@ -75,7 +76,7 @@ const MyOrders = () => {
               <td className="border p-2">{o.quantity}</td>
               <td className="border p-2">{o.status}</td>
               <td className="border p-2">COD</td>
-              <td className="border p-2">
+              <td className="border p-2 space-x-2">
                 <button
                   className="px-3 py-1 bg-blue-500 text-white rounded"
                   onClick={() => setSelectedOrder(o)}

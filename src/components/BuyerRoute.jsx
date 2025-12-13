@@ -12,7 +12,6 @@ const BuyerRoute = ({ children }) => {
     return <p className="text-center mt-12">Loading...</p>;
   }
 
-  // ✅ buyer OR admin allowed
   if (!user || (role !== "buyer" && role !== "admin")) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
