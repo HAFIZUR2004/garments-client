@@ -1,22 +1,29 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useAuth } from "../../hooks/useAuth";
+import axios from "axios";
+import ConfirmModal from "../../components/orders/ConfirmModal";
+import OrderTimeline from "../../components/orders/OrderTimeline";
 
 const MyOrders = () => {
-  const { user } = useAuth(); // Logged-in user
+  const { firebaseUser } = useAuth();
   const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [cancelId, setCancelId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const fetchOrders = async () => {
-    if (!user?.uid) return;
+    if (!firebaseUser) return;
     setLoading(true);
+
     try {
-      const res = await axios.get(`http://localhost:5000/api/my-orders/${user.uid}`);
+      const token = await firebaseUser.getIdToken();
+      const res = await axios.get(
+        `http://localhost:5000/api/orders/my-orders/${firebaseUser.uid}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setOrders(res.data);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch your orders");
     } finally {
       setLoading(false);
     }
@@ -24,26 +31,78 @@ const MyOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [user]);
+  }, [firebaseUser]);
 
-  if (loading) return <p className="text-center mt-12">Loading...</p>;
-  if (error) return <p className="text-center mt-12 text-red-600">{error}</p>;
-  if (orders.length === 0) return <p className="text-center mt-12">No orders found</p>;
+  const cancelOrder = async () => {
+    if (!cancelId) return;
+
+    try {
+      const token = await firebaseUser.getIdToken();
+      await axios.patch(
+        `http://localhost:5000/api/orders/cancel/${cancelId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCancelId(null);
+      fetchOrders();
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+    }
+  };
+
+  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (!orders.length) return <p className="text-center mt-10">No orders found</p>;
 
   return (
-    <div className="p-6 bg-white rounded shadow">
+    <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">My Orders</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {orders.map((o) => (
-          <div key={o._id} className="p-4 border rounded shadow">
-            <p><strong>Order ID:</strong> {o._id}</p>
-            <p><strong>Product ID:</strong> {o.productId}</p>
-            <p><strong>Quantity:</strong> {o.quantity}</p>
-            <p><strong>Price:</strong> ${o.price?.toFixed(2)}</p>
-            <p><strong>Status:</strong> {o.status}</p>
-          </div>
-        ))}
-      </div>
+      <table className="w-full border">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Order ID</th>
+            <th className="border p-2">Product</th>
+            <th className="border p-2">Qty</th>
+            <th className="border p-2">Status</th>
+            <th className="border p-2">Payment</th>
+            <th className="border p-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((o) => (
+            <tr key={o._id}>
+              <td className="border p-2">{o._id}</td>
+              <td className="border p-2">{o.productName}</td>
+              <td className="border p-2">{o.quantity}</td>
+              <td className="border p-2">{o.status}</td>
+              <td className="border p-2">COD</td>
+              <td className="border p-2">
+                <button
+                  className="px-3 py-1 bg-blue-500 text-white rounded"
+                  onClick={() => setSelectedOrder(o)}
+                >
+                  View
+                </button>
+                {o.status === "Pending" && (
+                  <button
+                    className="px-3 py-1 bg-red-500 text-white rounded"
+                    onClick={() => setCancelId(o._id)}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {selectedOrder && (
+        <OrderTimeline order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+      )}
+
+      {cancelId && (
+        <ConfirmModal onConfirm={cancelOrder} onCancel={() => setCancelId(null)} />
+      )}
     </div>
   );
 };

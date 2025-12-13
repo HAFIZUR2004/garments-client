@@ -39,6 +39,11 @@ const DashboardSidebar = ({ isOpen }) => {
       icon: "M12 4v16m8-8H4",
     },
     {
+      to: "/dashboard/track-order",
+      name: "Track Order",
+      icon: "M12 4v16m8-8H4",
+    },
+    {
       to: "/dashboard/my-orders",
       name: "My Orders",
       icon: "M5 13l4 4L19 7",

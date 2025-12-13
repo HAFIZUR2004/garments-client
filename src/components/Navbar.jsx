@@ -1,14 +1,14 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth"; 
+import { useAuth } from "../hooks/useAuth";
 import defaultAvatar from "../assets/haf.jpeg";
 
 const Navbar = () => {
   const { user, loading, logOut } = useAuth();
-  console.log(user)
+
   // 🔥 Firebase user load না হওয়া পর্যন্ত navbar দেখাবে না
   if (loading) {
-    return null; // চাইলে Spinner return করতে পারো
+    return null;
   }
 
   const handleLogout = async () => {
@@ -27,12 +27,12 @@ const Navbar = () => {
   return (
     <nav className="w-full bg-white shadow-md px-6 py-4 flex items-center justify-between">
       
-      {/* Left - Logo */}
+      {/* Logo */}
       <Link to="/" className="text-2xl font-bold text-blue-600">
         GarmentsPro
       </Link>
 
-      {/* Right - Menu */}
+      {/* Menu */}
       <ul className="flex items-center gap-6">
         
         {/* Common Links */}
@@ -56,7 +56,7 @@ const Navbar = () => {
               <NavLink to="/login" className={navLinkClass}>Login</NavLink>
             </li>
             <li>
-              <NavLink 
+              <NavLink
                 to="/register"
                 className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
               >
@@ -73,14 +73,20 @@ const Navbar = () => {
               <NavLink to="/dashboard" className={navLinkClass}>Dashboard</NavLink>
             </li>
 
-            {/* User Avatar */}
-            <li>
+            {/* Avatar with Email Tooltip */}
+            <li className="relative group">
               <img
                 src={user?.photoURL || defaultAvatar}
                 alt="user"
-                className="w-9 h-9 rounded-full border"
-                title={user?.displayName}
+                className="w-9 h-9 rounded-full border cursor-pointer"
               />
+
+              {/* Tooltip */}
+              <div className="absolute top-11 right-0 hidden group-hover:block 
+                              bg-black text-white text-xs px-3 py-1 rounded 
+                              shadow-lg whitespace-nowrap z-50">
+                {user?.email}
+              </div>
             </li>
 
             {/* Logout */}

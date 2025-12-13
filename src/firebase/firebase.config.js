@@ -6,12 +6,12 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCcvBenlckXSnicLn1rmFi__Woz3ibF33s",
-  authDomain: "garments-5f176.firebaseapp.com",
-  projectId: "garments-5f176",
-  storageBucket: "garments-5f176.firebasestorage.app",
-  messagingSenderId: "431390340546",
-  appId: "1:431390340546:web:55d09f94ecd115f85c925b"
+  apiKey: "AIzaSyC0w9tcRzX1EsX5tBg2tSj6p78wToEeK5s",
+  authDomain: "garmentspro-9850d.firebaseapp.com",
+  projectId: "garmentspro-9850d",
+  storageBucket: "garmentspro-9850d.firebasestorage.app",
+  messagingSenderId: "811417211428",
+  appId: "1:811417211428:web:e6a75b09938016e0bebeb1"
 };
 
 // Initialize Firebase

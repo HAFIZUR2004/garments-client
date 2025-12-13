@@ -1,80 +1,74 @@
 import React, { createContext, useState, useEffect } from "react";
-import { auth } from "../firebase/firebase.config.js";
+import { auth } from "../firebase/firebase.config";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
+  onAuthStateChanged,
 } from "firebase/auth";
 import axios from "axios";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const [firebaseUser, setFirebaseUser] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Firebase register
   const registerUser = (email, password) =>
     createUserWithEmailAndPassword(auth, email, password);
 
-  // Firebase login
   const loginUser = (email, password) =>
     signInWithEmailAndPassword(auth, email, password);
 
-  // Google login
   const googleLogin = () => {
     const provider = new GoogleAuthProvider();
     return signInWithPopup(auth, provider);
   };
 
-  // Logout
   const logOut = () => {
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
     return signOut(auth);
   };
 
-  // 🔥 FIX REFRESH LOGIN ISSUE
-useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-    if (currentUser) {
-      // ✅ Backend থেকে user info আনবে
-      const res = await axios.get(
-        `http://localhost:5000/api/users/by-email/${currentUser.email}`
-      );
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setFirebaseUser(currentUser);
 
-      const dbUser = res.data;
+        try {
+          const token = await currentUser.getIdToken();
+          localStorage.setItem("token", token);
 
-      const userData = {
-        uid: currentUser.uid,
-        email: currentUser.email,
-        name: dbUser.name,
-        role: dbUser.role,
-        status: dbUser.status,
-        photoURL: dbUser.photoURL || "",
-      };
+          const res = await axios.get(
+            `http://localhost:5000/api/users/by-email/${currentUser.email}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setUser(res.data);
+          localStorage.setItem("user", JSON.stringify(res.data));
+        } catch (err) {
+          console.error("User fetch error:", err);
+        }
+      } else {
+        setFirebaseUser(null);
+        setUser(null);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
 
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-    } else {
-      setUser(null);
-      localStorage.removeItem("user");
-    }
-    setLoading(false);
-  });
+      setLoading(false);
+    });
 
-  return () => unsubscribe();
-}, []);
-
-
-
-
+    return () => unsubscribe();
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
+        firebaseUser,
         user,
         loading,
         registerUser,

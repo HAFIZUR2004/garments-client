@@ -4,39 +4,51 @@ import DashboardLayout from "../layouts/DashboardLayout.jsx";
 
 // Auth
 import Login from "../Auth/Login.jsx";
+import Register from "../Auth/Register.jsx";
 
-// Pages
+// Public Pages
 import Home from "../pages/Home/Home.jsx";
 import AllProducts from "../Products/AllProducts.jsx";
 import ProductDetails from "../Products/ProductDetails.jsx";
 import BookingPage from "../Products/BookingPage.jsx";
+import BuyNowPage from "../Products/BuyNowPage.jsx";
 
-// Dashboard
-import Dashboard from "../Dashboard/Admin/DashboardHome.jsx";
+// Dashboard Home (ROLE BASED)
+import Dashboard from "../Dashboard/DashboardHome.jsx";
+
+// Admin Pages
 import ManageUsers from "../Dashboard/Admin/ManageUsers.jsx";
-import AddProduct from "../Dashboard/Manager/AddProduct.jsx";
-import MyOrders from "../Dashboard/Buyer/MyOrders.jsx";
+import AdminAllProducts from "../Dashboard/Admin/AdminAllProducts.jsx";
+import AdminAllOrders from "../Dashboard/Admin/AdminAllOrders.jsx";
 
-// Protected Routes
+// Manager Pages
+import AddProduct from "../Dashboard/Manager/AddProduct.jsx";
+
+// Buyer Pages
+import MyOrders from "../Dashboard/Buyer/MyOrders.jsx";
+import TrackOrder from "../Dashboard/Buyer/TrackOrder.jsx";
+
+// Route Guards
 import PrivateRoute from "../components/PrivateRoute.jsx";
 import AdminRoute from "../components/AdminRoute.jsx";
 import ManagerRoute from "../components/ManagerRoute.jsx";
 import BuyerRoute from "../components/BuyerRoute.jsx";
-import Register from "../Auth/Register.jsx";
 
 export const router = createBrowserRouter([
+  // ================= PUBLIC ROUTES =================
   {
     path: "/",
     element: <Layout />,
     children: [
       { path: "", element: <Home /> },
       { path: "login", element: <Login /> },
-      { path: "register", element: <Register/>},
+      { path: "register", element: <Register /> },
       { path: "allproducts", element: <AllProducts /> },
       { path: "product/:id", element: <ProductDetails /> },
-      { path: "book/:id", element: <BookingPage /> },
     ],
   },
+
+  // ================= DASHBOARD ROUTES =================
   {
     path: "/dashboard",
     element: (
@@ -45,20 +57,39 @@ export const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      { path: "", element: <Dashboard /> }, // /dashboard home
+      // 🔥 ROLE BASED DASHBOARD HOME
+      {
+        path: "",
+        element: <Dashboard />, // Admin / Manager / Buyer auto detect
+      },
 
-      // Admin Routes
+      // ========== ADMIN ROUTES ==========
       {
         path: "manage-users",
-       element: 
-        (
+        element: (
           <AdminRoute>
             <ManageUsers />
           </AdminRoute>
         ),
       },
+      {
+        path: "all-products",
+        element: (
+          <AdminRoute>
+            <AdminAllProducts />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "all-orders",
+        element: (
+          <AdminRoute>
+            <AdminAllOrders />
+          </AdminRoute>
+        ),
+      },
 
-      // Manager Routes
+      // ========== MANAGER ROUTES ==========
       {
         path: "add-product",
         element: (
@@ -68,12 +99,36 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Buyer Routes
+      // ========== BUYER ROUTES ==========
       {
         path: "my-orders",
         element: (
           <BuyerRoute>
             <MyOrders />
+          </BuyerRoute>
+        ),
+      },
+      {
+        path: "book/:id",
+        element: (
+          <BuyerRoute>
+            <BookingPage />
+          </BuyerRoute>
+        ),
+      },
+      {
+        path: "buy-now",
+        element: (
+          <BuyerRoute>
+            <BuyNowPage />
+          </BuyerRoute>
+        ),
+      },
+      {
+        path: "track-order/:orderId",
+        element: (
+          <BuyerRoute>
+            <TrackOrder />
           </BuyerRoute>
         ),
       },

@@ -1,123 +1,135 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { useAuth } from "../../hooks/useAuth";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
 
 const AddProduct = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    price: "",
-    quantity: "",
-    description: "",
-    image: "",
-  });
+  const { firebaseUser } = useAuth(); // ✅ FIX
+  const axiosSecure = useAxiosSecure();
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const onSubmit = async (data) => {
+    if (!firebaseUser?.email) {
+      return toast.error("User not authenticated");
+    }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setSuccess("");
-    setError("");
+    const product = {
+      name: data.name,
+      description: data.description,
+      category: data.category,
+      price: Number(data.price),
+      quantity: Number(data.quantity),
+      moq: Number(data.moq),
+      images: data.images
+        .split(",")
+        .map((img) => img.trim()),
+      demoVideo: data.demoVideo || "",
+      paymentOption: data.paymentOption,
+      showHome: data.showHome || false,
+
+      // 🔥 MOST IMPORTANT (Manager Dashboard Dynamic)
+      managerEmail: firebaseUser.email,
+
+      createdAt: new Date(),
+    };
 
     try {
-      const res = await axios.post("http://localhost:5000/api/products", formData);
-      if (res.data.success) {
-        setSuccess("Product added successfully!");
-        setFormData({
-          name: "",
-          category: "",
-          price: "",
-          quantity: "",
-          description: "",
-          image: "",
-        });
+      const res = await axiosSecure.post("/api/products", product);
+
+      if (res.data.insertedId) {
+        toast.success("✅ Product added successfully");
+        reset();
       }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to add product");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("❌ Failed to add product");
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Add New Product</h2>
+    <div className="max-w-4xl mx-auto bg-white p-8 rounded shadow">
+      <h2 className="text-2xl font-bold mb-6">Add New Product</h2>
 
-      {success && <p className="text-green-600 mb-2">{success}</p>}
-      {error && <p className="text-red-600 mb-2">{error}</p>}
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+      >
+        {/* Product Name */}
         <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
+          {...register("name", { required: "Product name is required" })}
           placeholder="Product Name"
           className="input input-bordered w-full"
-          required
         />
 
-        <input
-          type="text"
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          placeholder="Category"
-          className="input input-bordered w-full"
-          required
-        />
+        {/* Category */}
+        <select
+          {...register("category", { required: "Category is required" })}
+          className="select select-bordered w-full"
+        >
+          <option value="">Select Category</option>
+          <option value="Shirt">Shirt</option>
+          <option value="Pant">Pant</option>
+          <option value="Jacket">Jacket</option>
+          <option value="Accessories">Accessories</option>
+        </select>
 
+        {/* Price */}
         <input
           type="number"
-          name="price"
-          value={formData.price}
-          onChange={handleChange}
+          {...register("price", { required: true })}
           placeholder="Price"
           className="input input-bordered w-full"
-          required
         />
 
+        {/* Quantity */}
         <input
           type="number"
-          name="quantity"
-          value={formData.quantity}
-          onChange={handleChange}
+          {...register("quantity", { required: true })}
           placeholder="Quantity"
           className="input input-bordered w-full"
-          required
         />
 
+        {/* MOQ */}
         <input
-          type="text"
-          name="image"
-          value={formData.image}
-          onChange={handleChange}
-          placeholder="Image URL"
+          type="number"
+          {...register("moq", { required: true })}
+          placeholder="Minimum Order Quantity (MOQ)"
           className="input input-bordered w-full"
         />
 
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          placeholder="Description"
-          className="textarea textarea-bordered w-full"
-          required
+        {/* Payment Option */}
+        <select
+          {...register("paymentOption", { required: true })}
+          className="select select-bordered w-full"
+        >
+          <option value="">Payment Option</option>
+          <option value="COD">Cash on Delivery</option>
+          <option value="PayFirst">Pay First</option>
+        </select>
+
+        {/* Images */}
+        <input
+          {...register("images", { required: true })}
+          placeholder="Image URLs (comma separated)"
+          className="input input-bordered w-full md:col-span-2"
         />
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={loading}
-        >
-          {loading ? "Adding..." : "Add Product"}
+        {/* Description */}
+        <textarea
+          {...register("description", { required: true })}
+          placeholder="Product Description"
+          className="textarea textarea-bordered w-full md:col-span-2"
+        />
+
+        <button className="btn btn-primary md:col-span-2">
+          Add Product
         </button>
       </form>
     </div>

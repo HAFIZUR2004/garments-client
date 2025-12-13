@@ -12,11 +12,11 @@ const AllProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/all-products"); // all products
+        const res = await axios.get("http://localhost:5000/api/products/all");
         setProducts(res.data || []);
       } catch (err) {
         setError("Failed to load products");
-        console.error(err);
+        console.error("Error fetching products:", err);
       } finally {
         setLoading(false);
       }
@@ -31,31 +31,48 @@ const AllProducts = () => {
 
         {loading && <p className="text-center text-gray-700">Loading products...</p>}
         {error && <p className="text-center text-red-600">{error}</p>}
-        {!loading && products.length === 0 && (
+        {!loading && products.length === 0 && !error && (
           <p className="text-center text-gray-500">No products available</p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
             <motion.div
               key={product._id}
               whileHover={{ scale: 1.05 }}
-              className="bg-white rounded-lg shadow p-4 flex flex-col"
+              className="bg-white rounded-lg shadow-lg p-4 flex flex-col transition duration-300"
             >
+              {/* Main image */}
               <img
-                src={product.image || "https://via.placeholder.com/300"}
+                src={product.images && product.images.length > 0 ? product.images[0] : "https://via.placeholder.com/300"}
                 alt={product.name}
-                className="w-full h-48 object-cover mb-4 rounded"
+                className="w-full h-48 object-cover mb-2 rounded"
               />
-              <h3 className="text-xl font-semibold mb-1">{product.name}</h3>
-              <p className="text-gray-600 mb-1">Category: {product.category}</p>
-              <p className="text-gray-700 font-bold mb-2">${product.price?.toFixed(2)}</p>
+
+              {/* Mini gallery for additional images */}
+              {product.images && product.images.length > 1 && (
+                <div className="flex gap-2 mb-4">
+                  {product.images.slice(1, 5).map((img, index) => (
+                    <img
+                      key={index}
+                      src={img}
+                      alt={`${product.name}-${index + 1}`}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                  ))}
+                </div>
+              )}
+
+              <h3 className="text-xl font-bold mb-1">{product.name}</h3>
+              <p className="text-gray-600 mb-1">Category: {product.category || 'N/A'}</p>
+              <p className="text-green-700 font-extrabold text-lg mb-2">${product.price?.toFixed(2) || '0.00'}</p>
               {product.quantity !== undefined && (
                 <p className="text-gray-500 mb-4">Available: {product.quantity}</p>
               )}
+
               <button
                 onClick={() => navigate(`/product/${product._id}`)}
-                className="mt-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                className="mt-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300 shadow-md"
               >
                 View Details
               </button>

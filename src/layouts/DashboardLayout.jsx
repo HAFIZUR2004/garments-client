@@ -18,7 +18,7 @@ export default function DashboardLayout() {
         <DashboardNavbar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
         {/* Main content */}
-        <main className="flex-1 p-6 bg-gray-100">
+        <main className="flex-1 p-6 ">
           <Outlet />
         </main>
       </div>
