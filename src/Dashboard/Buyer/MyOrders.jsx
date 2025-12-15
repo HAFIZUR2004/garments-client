@@ -19,7 +19,8 @@ const MyOrders = () => {
     setLoading(true);
     try {
       const token = await firebaseUser.getIdToken();
-      const res = await axiosSecure.get(`/api/orders/my-orders/${firebaseUser.uid}`, {
+      // ✅ সংশোধন করা হয়েছে: এখন শুধু /api/orders/my-orders কল করা হবে
+      const res = await axiosSecure.get(`/api/orders/my-orders`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setOrders(res.data);
@@ -75,7 +76,7 @@ const MyOrders = () => {
               <td className="border p-2">{o.productName}</td>
               <td className="border p-2">{o.quantity}</td>
               <td className="border p-2">{o.status}</td>
-              <td className="border p-2">COD</td>
+              <td className="border p-2">{o.paymentMethod || 'N/A'}</td> {/* paymentMethod ডিসপ্লে করা উচিত */}
               <td className="border p-2 space-x-2">
                 <button
                   className="px-3 py-1 bg-blue-500 text-white rounded"

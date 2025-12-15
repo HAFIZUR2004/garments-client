@@ -1,104 +1,132 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 
 const BookingPage = () => {
-  const { firebaseUser, user, loading } = useAuth();
-  const { id } = useParams();
+  const { firebaseUser, userProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const product = location.state?.product;
 
-  const [product, setProduct] = useState(null);
-  const [loadingProduct, setLoadingProduct] = useState(true);
-  const [error, setError] = useState("");
-
-  const [firstName, setFirstName] = useState("");
+  const [quantity, setQuantity] = useState(product?.minOrder || 1);
+  const [firstName, setFirstName] = useState(userProfile?.name || "");
   const [lastName, setLastName] = useState("");
   const [contact, setContact] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [orderPrice, setOrderPrice] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch product
-  useEffect(() => {
-    axios
-      .get(`http://localhost:5000/api/products/${id}`)
-      .then((res) => {
-        setProduct(res.data);
-        setOrderPrice(res.data.price);
-        setLoadingProduct(false);
-      })
-      .catch(() => {
-        setError("Failed to load product");
-        setLoadingProduct(false);
-      });
-  }, [id]);
+  if (!product) return <p>Product not found!</p>;
+  if (!firebaseUser) return <p>Please login to continue.</p>;
 
-  // Update price
-  useEffect(() => {
-    if (product) setOrderPrice(quantity * product.price);
-  }, [quantity, product]);
+  const handleSubmit = async () => {
+    if (quantity < product.minOrder) return alert(`Minimum order is ${product.minOrder}`);
+    if (quantity > product.availableQuantity) return alert(`Maximum available is ${product.availableQuantity}`);
 
-  if (loading) return <p>Checking login...</p>;
-  if (!user)
-    return (
-      <div className="text-center mt-20">
-        <p>Please login to book.</p>
-        <button onClick={() => navigate("/login")} className="bg-amber-500 px-4 py-2 rounded">
-          Go to Login
-        </button>
-      </div>
-    );
-
-  if (loadingProduct) return <p>Loading product...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!product) return <p>Product not found.</p>;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (quantity < 1 || quantity > product.quantity) {
-      return alert(`Quantity must be between 1 and ${product.quantity}`);
-    }
-
-    const order = { firstName, lastName, contact, address, notes, productId: product._id, productName: product.name, quantity, orderPrice };
-
+    setLoading(true);
     try {
       const token = await firebaseUser.getIdToken();
-      const res = await axios.post("http://localhost:5000/api/orders/book", order, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.post(
+        "http://localhost:5000/api/orders/book",
+        {
+          productId: product._id,
+          productName: product.name,
+          quantity,
+          orderPrice: product.price * quantity,
+          firstName,
+          lastName,
+          contact,
+          address,
+          notes,
+          paymentMethod: product.paymentOption || "COD",
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       if (res.data.success) {
-        alert("Order placed successfully!");
+        alert(`Booking successful! Order ID: ${res.data.orderId}`);
         navigate("/dashboard/my-orders");
-      } else {
-        alert(res.data.error || "Failed to place order");
       }
     } catch (err) {
-      console.error(err.response || err.message);
-      alert(err.response?.data?.error || "Failed to place order");
+      console.error(err);
+      alert(err.response?.data?.error || "Failed to place booking");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-4">{product.name}</h2>
-      <p className="mb-4">{product.description}</p>
-      <p className="font-bold mb-4">Price: ${product.price}</p>
+    <div className="container mx-auto px-6 py-12">
+      <h2 className="text-2xl font-bold mb-4">Book: {product.name}</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        <input type="email" value={user.email} readOnly className="border p-2 w-full" />
-        <input type="text" value={product.name} readOnly className="border p-2 w-full" />
-        <input type="text" value={`$${orderPrice.toFixed(2)}`} readOnly className="border p-2 w-full" />
-        <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="border p-2 w-full" />
-        <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="border p-2 w-full" />
-        <input type="number" min="1" max={product.quantity} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} required className="border p-2 w-full" />
-        <input type="text" placeholder="Contact" value={contact} onChange={(e) => setContact(e.target.value)} required className="border p-2 w-full" />
-        <textarea placeholder="Address" value={address} onChange={(e) => setAddress(e.target.value)} required className="border p-2 w-full" />
-        <textarea placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="border p-2 w-full" />
-        <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">Place Order</button>
-      </form>
+      <div className="mb-2">
+        <label className="block">Quantity:</label>
+        <input
+          type="number"
+          value={quantity}
+          min={product.minOrder}
+          max={product.availableQuantity}
+          onChange={(e) => setQuantity(Number(e.target.value))}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+
+      <div className="mb-2">
+        <label className="block">First Name:</label>
+        <input
+          type="text"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+
+      <div className="mb-2">
+        <label className="block">Last Name:</label>
+        <input
+          type="text"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+
+      <div className="mb-2">
+        <label className="block">Contact Number:</label>
+        <input
+          type="text"
+          value={contact}
+          onChange={(e) => setContact(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+
+      <div className="mb-2">
+        <label className="block">Delivery Address:</label>
+        <textarea
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block">Additional Notes:</label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+      >
+        {loading ? "Processing..." : "Confirm Booking"}
+      </button>
     </div>
   );
 };

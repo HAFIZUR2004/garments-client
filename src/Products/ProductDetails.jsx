@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, userProfile } = useAuth(); // userProfile has role, status
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -21,12 +21,26 @@ const ProductDetails = () => {
 
   if (loading) return <p className="text-center mt-10">Loading...</p>;
   if (error) return <p className="text-center mt-10 text-red-600">{error}</p>;
+  if (!product) return <p className="text-center mt-10">Product not found!</p>;
+
+  const handleBook = () => {
+    if (!firebaseUser) return alert("Please login to book");
+    if (userProfile?.status === "suspended") return alert("Your account is suspended!");
+    navigate(`/dashboard/book/${product._id}`, { state: { product } });
+  };
+
+  const handleBuyNow = () => {
+    if (!firebaseUser) return alert("Please login to buy");
+    if (userProfile?.status === "suspended") return alert("Your account is suspended!");
+
+    navigate("/dashboard/buy-now", { state: { product } });
+  };
 
   return (
     <div className="container mx-auto px-6 py-12">
       <div className="flex flex-col md:flex-row gap-6">
         <img
-          src={product.images || "https://via.placeholder.com/400"}
+          src={product.images?.[0] || "https://via.placeholder.com/400"}
           alt={product.name}
           className="w-full md:w-1/2 rounded object-cover"
         />
@@ -37,18 +51,14 @@ const ProductDetails = () => {
 
           <button
             className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 mr-4"
-            onClick={() => navigate(`/dashboard/book/${product._id}`)}
+            onClick={handleBook}
           >
             Book Now
           </button>
 
           <button
             className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-            onClick={() => {
-              if (!firebaseUser) return alert("Please login to buy");
-              // 🔹 Redirect to Buy Now / Checkout Page
-              navigate("/dashboard/buy-now", { state: { product } });
-            }}
+            onClick={handleBuyNow}
           >
             Buy Now
           </button>

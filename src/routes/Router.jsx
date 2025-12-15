@@ -35,121 +35,130 @@ import ManagerRoute from "../components/ManagerRoute.jsx";
 import BuyerRoute from "../components/BuyerRoute.jsx";
 import ApprovedOrders from "../Dashboard/Manager/approved-orders.jsx";
 import PendingOrders from "../Dashboard/Manager/pending-orders.jsx";
+import PaymentSuccessPage from "../pages/PaymentSuccessPage.jsx";
 
 export const router = createBrowserRouter([
-  // ================= PUBLIC ROUTES =================
-  {
-    path: "/",
-    element: <Layout />,
-    children: [
-      { path: "", element: <Home /> },
-      { path: "login", element: <Login /> },
-      { path: "register", element: <Register /> },
-      { path: "allproducts", element: <AllProducts /> },
-      { path: "product/:id", element: <ProductDetails /> },
-    ],
-  },
+    // ================= PUBLIC ROUTES =================
+    {
+        path: "/",
+        element: <Layout />,
+        children: [
+            { path: "", element: <Home /> },
+            { path: "login", element: <Login /> },
+            // ❌ REMOVED: { path: "paymentsuccesspage", element: <PaymentSuccessPage/> }, 
+            { path: "register", element: <Register /> },
+            { path: "allproducts", element: <AllProducts /> },
+            { path: "product/:id", element: <ProductDetails /> },
+        ],
+    },
 
-  // ================= DASHBOARD ROUTES =================
-  {
-    path: "/dashboard",
-    element: (
-      <PrivateRoute>
-        <DashboardLayout />
-      </PrivateRoute>
-    ),
-    children: [
-      // 🔥 ROLE BASED DASHBOARD HOME
-      {
-        path: "",
-        element: <Dashboard />, // Admin / Manager / Buyer auto detect
-      },
+    // ================= DASHBOARD ROUTES =================
+    {
+        path: "/dashboard",
+        element: (
+            <PrivateRoute>
+                <DashboardLayout />
+            </PrivateRoute>
+        ),
+        children: [
+            // 🔥 ROLE BASED DASHBOARD HOME
+            {
+                path: "",
+                element: <Dashboard />, // Admin / Manager / Buyer auto detect
+            },
 
-      // ========== ADMIN ROUTES ==========
-      {
-        path: "manage-users",
-        element: (
-          <AdminRoute>
-            <ManageUsers />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "all-products",
-        element: (
-          <AdminRoute>
-            <AdminAllProducts />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "all-orders",
-        element: (
-          <AdminRoute>
-            <AdminAllOrders />
-          </AdminRoute>
-        ),
-      },
+            // ✅ ADDED: পেমেন্ট সফলতার পাতা
+            {
+                path: "payment-success",
+                element: <PaymentSuccessPage/>,
+            },
 
-      // ========== MANAGER ROUTES ==========
-      {
-        path: "add-product",
-        element: (
-          <ManagerRoute>
-            <AddProduct />
-          </ManagerRoute>
-        ),
-      },
-      {
-        path: "PendingOrders",
-        element: (
-          <ManagerRoute>
-            <PendingOrders/>
-          </ManagerRoute>
-        ),
-      },
-      {
-        path: "ApprovedOrders",
-        element: (
-          <ManagerRoute>
-            <ApprovedOrders/>
-          </ManagerRoute>
-        ),
-      },
+            // ========== ADMIN ROUTES ==========
+            {
+                path: "manage-users",
+                element: (
+                    <AdminRoute>
+                        <ManageUsers />
+                    </AdminRoute>
+                ),
+            },
+            {
+                path: "all-products",
+                element: (
+                    <AdminRoute>
+                        <AdminAllProducts />
+                    </AdminRoute>
+                ),
+            },
+            {
+                path: "all-orders",
+                element: (
+                    <AdminRoute>
+                        <AdminAllOrders />
+                    </AdminRoute>
+                ),
+            },
 
-      // ========== BUYER ROUTES ==========
-      {
-        path: "my-orders",
-        element: (
-          <BuyerRoute>
-            <MyOrders />
-          </BuyerRoute>
-        ),
-      },
-      {
-        path: "book/:id",
-        element: (
-          <BuyerRoute>
-            <BookingPage />
-          </BuyerRoute>
-        ),
-      },
-      {
-        path: "buy-now",
-        element: (
-          <BuyerRoute>
-            <BuyNowPage />
-          </BuyerRoute>
-        ),
-      },
-      {
-        path: "/dashboard/track-order/:orderId",
-        element: (
-          <BuyerRoute>
-            <TrackOrder />
-          </BuyerRoute>
-        ),
-      },
-    ],
-  },
+            // ========== MANAGER ROUTES ==========
+            {
+                path: "/dashboard/add-product",
+                element: (
+                    <ManagerRoute>
+                        <AddProduct />
+                    </ManagerRoute>
+                ),
+            },
+            {
+                path: "/dashboard/pending-orders",
+                element: (
+                    <ManagerRoute>
+                        <PendingOrders/>
+                    </ManagerRoute>
+                ),
+            },
+            {
+                path: "/dashboard/approved-orders",
+                element: (
+                    <ManagerRoute>
+                        <ApprovedOrders/>
+                    </ManagerRoute>
+                ),
+            },
+
+            // ========== BUYER ROUTES ==========
+            {
+                path: "my-orders",
+                element: (
+                    <BuyerRoute>
+                        <MyOrders />
+                    </BuyerRoute>
+                ),
+            },
+            {
+                path: "book/:id",
+                element: (
+                    <BuyerRoute>
+                        <BookingPage />
+                    </BuyerRoute>
+                ),
+            },
+            {
+                path: "buy-now",
+                element: (
+                    <BuyerRoute>
+                        <BuyNowPage />
+                    </BuyerRoute>
+                ),
+            },
+            // 💡 ড্যাশবোর্ড রুটের ভেতরে থাকলে /dashboard/track-order/:orderId না লিখে শুধু track-order/:orderId লিখুন।
+            {
+                path: "track-order/:orderId",
+                element: (
+                    <BuyerRoute>
+                        <TrackOrder />
+                    </BuyerRoute>
+                ),
+            },
+        ],
+    },
 ]);
