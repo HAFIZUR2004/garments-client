@@ -36,6 +36,7 @@ import BuyerRoute from "../components/BuyerRoute.jsx";
 import ApprovedOrders from "../Dashboard/Manager/approved-orders.jsx";
 import PendingOrders from "../Dashboard/Manager/pending-orders.jsx";
 import PaymentSuccessPage from "../pages/PaymentSuccessPage.jsx";
+import ProfilePage from "../Dashboard/ProfilePage.jsx";
 
 export const router = createBrowserRouter([
     // ================= PUBLIC ROUTES =================
@@ -65,6 +66,10 @@ export const router = createBrowserRouter([
             {
                 path: "",
                 element: <Dashboard />, // Admin / Manager / Buyer auto detect
+            },
+            {
+                path: "profile",
+                element: <ProfilePage />,
             },
 
             // ✅ ADDED: পেমেন্ট সফলতার পাতা
