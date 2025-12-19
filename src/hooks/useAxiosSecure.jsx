@@ -21,6 +21,7 @@ const useAxiosSecure = () => {
     }
   );
 
+
   // Optional: handle 401/403 globally
   instance.interceptors.response.use(
     (response) => response,

@@ -1,127 +1,85 @@
-// src/pages/dashboard/TrackOrder.jsx
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import useAxiosSecure from "../../hooks/useAxiosSecure";
-import { toast } from "react-hot-toast";
+import axios from "axios";
+import { useAuth } from "../../hooks/useAuth";
 
 const TrackOrder = () => {
   const { orderId } = useParams();
-  const axiosSecure = useAxiosSecure();
+  const { firebaseUser } = useAuth();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        setLoading(true);
-        const { data } = await axiosSecure.get(
-          `/api/orders/track/${orderId}`
-        );
+    if (!firebaseUser) return;
 
-        // sort steps by date + time (chronological)
-        const sortedSteps = (data.trackingSteps || []).sort(
-          (a, b) =>
-            new Date(`${a.date} ${a.time}`) -
-            new Date(`${b.date} ${b.time}`)
-        );
+    axios
+      .get(`http://localhost:5000/api/orders/track/${orderId}`, {
+        headers: {
+          Authorization: `Bearer ${firebaseUser.accessToken}`
+        }
+      })
+      .then(res => setOrder(res.data))
+      .catch(() => setError("Failed to load tracking info"))
+      .finally(() => setLoading(false));
+  }, [orderId, firebaseUser]);
 
-        setOrder({ ...data, trackingSteps: sortedSteps });
-      } catch (error) {
-        toast.error("Failed to load tracking info");
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (error) return <p className="text-center text-red-600">{error}</p>;
+  if (!order) return <p className="text-center">Order not found</p>;
 
-    fetchOrder();
-  }, [orderId, axiosSecure]);
-
-  if (loading) {
-    return <p className="text-center mt-10">Loading tracking info...</p>;
-  }
-
-  if (!order) {
-    return <p className="text-center mt-10">Order not found</p>;
-  }
-
-  const lastIndex = order.trackingSteps.length - 1;
+  const steps = [...order.trackingSteps].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-2">
-        Track Order #{order._id}
+    <div className="container mx-auto px-6 py-10">
+      <h2 className="text-2xl font-bold mb-6">
+        📦 Track Order #{order._id}
       </h2>
 
-      <p className="mb-6 text-gray-600">
-        Product: <span className="font-medium">{order.productTitle}</span>
-      </p>
+      <div className="bg-white shadow rounded-lg p-6">
+        <p className="mb-4">
+          <strong>Current Status:</strong> {order.status}
+        </p>
 
-      {/* ===== Timeline ===== */}
-      <div className="relative border-l-2 border-gray-300 pl-6">
-        {order.trackingSteps.map((step, index) => {
-          const isLatest = index === lastIndex;
+        <div className="space-y-4">
+          {steps.map((step, index) => {
+            const isLatest = index === steps.length - 1;
 
-          return (
-            <div key={index} className="mb-8 relative">
-              {/* Dot */}
-              <span
-                className={`absolute -left-[11px] top-1 w-5 h-5 rounded-full 
-                ${
-                  isLatest
-                    ? "bg-green-600 ring-4 ring-green-200"
-                    : "bg-gray-400"
-                }`}
-              ></span>
-
-              {/* Content */}
+            return (
               <div
-                className={`p-4 rounded-md shadow 
-                ${
+                key={index}
+                className={`border-l-4 pl-4 py-3 ${
                   isLatest
-                    ? "border border-green-500 bg-green-50"
-                    : "bg-white"
+                    ? "border-green-600 bg-green-50"
+                    : "border-gray-300"
                 }`}
               >
-                <h3 className="text-lg font-semibold">
-                  {step.status}
-                </h3>
+                <p className="font-semibold text-lg">{step.status}</p>
 
                 <p className="text-sm text-gray-500">
-                  📅 {step.date} ⏰ {step.time}
+                  📍 {step.location}
                 </p>
 
-                <p className="text-sm mt-1">
-                  📍 Location:{" "}
-                  <span className="font-medium">{step.location}</span>
+                <p className="text-sm text-gray-500">
+                  📅 {new Date(step.date).toLocaleDateString()} •{" "}
+                  {new Date(step.date).toLocaleTimeString()}
                 </p>
 
-                {step.notes && (
-                  <p className="text-sm mt-2 text-gray-700">
-                    📝 {step.notes}
-                  </p>
-                )}
+                <p className="text-sm italic">{step.notes}</p>
 
-                {step.image && (
-                  <img
-                    src={step.image}
-                    alt="tracking"
-                    className="mt-3 w-40 rounded"
-                  />
+                {isLatest && (
+                  <span className="inline-block mt-2 text-xs bg-green-600 text-white px-2 py-1 rounded">
+                    Latest Update
+                  </span>
                 )}
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ===== Current Location ===== */}
-      {order.currentLocation && (
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-300 rounded">
-          <h4 className="font-semibold mb-1">📍 Current Location</h4>
-          <p>{order.currentLocation}</p>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 };

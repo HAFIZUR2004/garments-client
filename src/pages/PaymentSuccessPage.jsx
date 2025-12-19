@@ -1,16 +1,19 @@
-// PaymentSuccessPage.jsx (সংশোধিত)
+// PaymentSuccessPage.jsx (সংশোধিত কোড)
 
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useAuth } from "../hooks/useAuth"; 
+import { useAuth } from "../hooks/useAuth";
 import Swal from 'sweetalert2';
+
+// ✅ আপনার API Base URL সেট করুন
+const API_BASE_URL = "http://localhost:5000/api/orders";
 
 const PaymentSuccessPage = () => {
   const { firebaseUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [loading, setLoading] = useState(true);
   const [orderId, setOrderId] = useState(null);
   const [amount, setAmount] = useState(null);
@@ -24,8 +27,7 @@ const PaymentSuccessPage = () => {
     // 1. If not logged in or no session_id, redirect
     if (!firebaseUser || !sessionId) {
       if (!sessionId) {
-        // যদি সেশন আইডি না থাকে, My Orders এ redirect করুন
-        navigate("/dashboard/my-orders", { replace: true }); 
+        navigate("/dashboard/my-orders", { replace: true });
       }
       return;
     }
@@ -34,21 +36,19 @@ const PaymentSuccessPage = () => {
       setLoading(true);
       try {
         const token = await firebaseUser.getIdToken();
-        
+
         // 2. Send session_id to backend for final order processing
         const res = await axios.post(
-          "http://localhost:5000/api/orders/payment-success", // আপনার ব্যাকএন্ড রুট
+          `${API_BASE_URL}/payment-success`, // আপনার ব্যাকএন্ড রুট
           { sessionId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (res.data.success) {
           setOrderId(res.data.orderId);
-          // যেহেতু সার্ভার থেকে orderPrice আসছে না, এটি ডামি/সঠিকভাবে রিসিভ করার ব্যবস্থা করতে হবে
-          // ধরে নিচ্ছি সার্ভার থেকে orderPrice রিকোয়েস্টের রেসপন্সে আসছে (যদি না আসে, আপনার ব্যাকএন্ড ঠিক করুন)
-          // সার্ভার থেকে আসা ডেটা যদি orderPrice বা amount ধারণ করে: setAmount(res.data.orderPrice);
-          setAmount(100); // আপাতত ডামি অ্যামাউন্ট ব্যবহার করা হলো
-            
+          // ✅ এখন সার্ভার থেকে orderPrice আসছে
+          setAmount(res.data.orderPrice);
+
           Swal.fire({
             icon: 'success',
             title: 'Payment Confirmed!',
@@ -61,7 +61,7 @@ const PaymentSuccessPage = () => {
         }
       } catch (err) {
         console.error("Payment Success Error:", err);
-        setError(err.response?.data?.error || "Could not verify payment session.");
+        setError(err.response?.data?.error || "Could not verify payment session. Please check your network and server logs.");
         Swal.fire({
           icon: 'error',
           title: 'Verification Failed',
@@ -75,15 +75,13 @@ const PaymentSuccessPage = () => {
     processPayment();
   }, [firebaseUser, sessionId, navigate]);
 
-  // UI (Loading, Error, Success)
-  // ... (পূর্বের কোড থেকে UI এখানে ব্যবহার করুন) ...
   // Loading State UI
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <svg className="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
         <p className="mt-4 text-gray-700">Verifying payment and placing order...</p>
       </div>
@@ -119,7 +117,7 @@ const PaymentSuccessPage = () => {
         </p>
         {amount && (
           <p className="text-gray-700 mb-4">
-            <strong>Amount Paid:</strong> ${amount.toFixed(2)}
+            <strong>Amount Paid:</strong> ${Number(amount).toFixed(2)}
           </p>
         )}
         <button

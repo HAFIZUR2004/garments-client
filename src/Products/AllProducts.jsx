@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const AllProducts = () => {
   const [products, setProducts] = useState([]);
@@ -12,72 +13,78 @@ const AllProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setLoading(true);
+        setError("");
         const res = await axios.get("http://localhost:5000/api/products/all");
         setProducts(res.data || []);
       } catch (err) {
         setError("Failed to load products");
-        console.error("Error fetching products:", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProducts();
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12">
+    <div className="min-h-screen bg-gray-50 py-16">
       <div className="container mx-auto px-6">
-        <h2 className="text-3xl font-bold mb-8 text-center">All Products</h2>
+        <h2 className="text-4xl font-bold text-center mb-12">All Products</h2>
 
-        {loading && <p className="text-center text-gray-700">Loading products...</p>}
-        {error && <p className="text-center text-red-600">{error}</p>}
+        {/* Loading */}
+        {loading && <LoadingSpinner />}
+
+        {/* Error */}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {/* No products */}
         {!loading && products.length === 0 && !error && (
           <p className="text-center text-gray-500">No products available</p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <motion.div
-              key={product._id}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white rounded-lg shadow-lg p-4 flex flex-col transition duration-300"
-            >
-              {/* Main image */}
-              <img
-                src={product.images && product.images.length > 0 ? product.images[0] : "https://via.placeholder.com/300"}
-                alt={product.name}
-                className="w-full h-48 object-cover mb-2 rounded"
-              />
-
-              {/* Mini gallery for additional images */}
-              {product.images && product.images.length > 1 && (
-                <div className="flex gap-2 mb-4">
-                  {product.images.slice(1, 5).map((img, index) => (
-                    <img
-                      key={index}
-                      src={img}
-                      alt={`${product.name}-${index + 1}`}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                  ))}
-                </div>
-              )}
-
-              <h3 className="text-xl font-bold mb-1">{product.name}</h3>
-              <p className="text-gray-600 mb-1">Category: {product.category || 'N/A'}</p>
-              <p className="text-green-700 font-extrabold text-lg mb-2">${product.price?.toFixed(2) || '0.00'}</p>
-              {product.quantity !== undefined && (
-                <p className="text-gray-500 mb-4">Available: {product.quantity}</p>
-              )}
-
-              <button
+        {/* Products Grid */}
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {!loading &&
+            products.length > 0 &&
+            products.map((product) => (
+              <motion.div
+                key={product._id}
+                whileHover={{ scale: 1.03 }}
+                transition={{ duration: 0.3 }}
+                className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden border border-gray-100 flex flex-col cursor-pointer"
                 onClick={() => navigate(`/product/${product._id}`)}
-                className="mt-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300 shadow-md"
               >
-                View Details
-              </button>
-            </motion.div>
-          ))}
+                {/* Main Image */}
+               <div className="relative aspect-[4/3] overflow-hidden">
+                  <img
+                    src={product.images?.[0] || "https://via.placeholder.com/300"}
+                    alt={product.name}
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+                  <div className="absolute bottom-3 left-3 bg-yellow-400 px-3 py-1 rounded shadow-lg text-black font-bold">
+                    ${Number(product.price || 0).toFixed(2)}
+                  </div>
+                </div>
+
+                {/* Product Info (moved slightly below) */}
+                <div className="p-5 flex flex-col flex-1 mt-4">
+                  <h3 className="text-lg font-semibold line-clamp-1 mb-2">{product.name}</h3>
+                  <p className="text-sm text-gray-500 mb-2 line-clamp-2">{product.description}</p>
+                  <p className="text-sm text-gray-400 mb-2">Category: {product.category || "N/A"}</p>
+                  {product.quantity !== undefined && (
+                    <p className="text-sm text-gray-500 mb-4">Stock: {product.quantity}</p>
+                  )}
+
+                  <button
+                    className="mt-auto bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2.5 rounded-lg font-medium hover:from-indigo-500 hover:to-blue-500 transition shadow-md"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </motion.div>
+            ))}
         </div>
       </div>
     </div>

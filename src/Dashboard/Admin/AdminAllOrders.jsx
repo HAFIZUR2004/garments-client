@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
 import { toast } from "react-hot-toast";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const AdminAllOrders = () => {
   const axiosSecure = useAxiosSecure();
@@ -10,11 +11,11 @@ const AdminAllOrders = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await axiosSecure.get("/api/orders");
+      const res = await axiosSecure.get("/api/orders/all");
       setOrders(res.data || []);
     } catch (error) {
       console.error(error);
-      toast.error(error?.response?.data?.message || "Failed to load orders");
+      toast.error(error?.response?.data?.error || "Failed to load orders");
     } finally {
       setLoading(false);
     }
@@ -26,15 +27,17 @@ const AdminAllOrders = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="min-h-screen flex justify-center items-center">
+        <LoadingSpinner />
       </div>
     );
   }
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">All Orders (Admin)</h2>
+      <h2 className="text-2xl font-bold mb-6">
+        All Orders (Admin)
+      </h2>
 
       <div className="overflow-x-auto bg-base-100 shadow rounded-lg">
         <table className="table table-zebra w-full">

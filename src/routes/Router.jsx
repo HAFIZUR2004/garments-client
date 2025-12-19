@@ -37,6 +37,9 @@ import ApprovedOrders from "../Dashboard/Manager/approved-orders.jsx";
 import PendingOrders from "../Dashboard/Manager/pending-orders.jsx";
 import PaymentSuccessPage from "../pages/PaymentSuccessPage.jsx";
 import ProfilePage from "../Dashboard/ProfilePage.jsx";
+import ManageProducts from "../Dashboard/Manager/ManageProducts.jsx";
+import AboutUs from "../pages/AboutUs.jsx";
+import Contact from "../pages/Contact.jsx";
 
 export const router = createBrowserRouter([
     // ================= PUBLIC ROUTES =================
@@ -49,7 +52,17 @@ export const router = createBrowserRouter([
             // ❌ REMOVED: { path: "paymentsuccesspage", element: <PaymentSuccessPage/> }, 
             { path: "register", element: <Register /> },
             { path: "allproducts", element: <AllProducts /> },
-            { path: "product/:id", element: <ProductDetails /> },
+            { path: "about", element: <AboutUs/>},
+            { path: "contact", element: <Contact/> },
+
+            {
+                path: "product/:id",
+                element: (
+                    <PrivateRoute>
+                        <ProductDetails />
+                    </PrivateRoute>
+                ),
+            },
         ],
     },
 
@@ -75,7 +88,7 @@ export const router = createBrowserRouter([
             // ✅ ADDED: পেমেন্ট সফলতার পাতা
             {
                 path: "payment-success",
-                element: <PaymentSuccessPage/>,
+                element: <PaymentSuccessPage />,
             },
 
             // ========== ADMIN ROUTES ==========
@@ -108,24 +121,33 @@ export const router = createBrowserRouter([
             {
                 path: "/dashboard/add-product",
                 element: (
-                    <ManagerRoute>
+                    <ManagerRoute blockOnSuspend>
                         <AddProduct />
                     </ManagerRoute>
                 ),
             },
             {
+                path: "/dashboard/manage-products",
+                element: <ManageProducts />,
+                //  (
+                //     <ManagerRoute>
+                //         <ManageProducts />
+                //     </ManagerRoute>
+                // ),
+            },
+            {
                 path: "/dashboard/pending-orders",
                 element: (
                     <ManagerRoute>
-                        <PendingOrders/>
+                        <PendingOrders />
                     </ManagerRoute>
                 ),
             },
             {
                 path: "/dashboard/approved-orders",
                 element: (
-                    <ManagerRoute>
-                        <ApprovedOrders/>
+                    <ManagerRoute blockOnSuspend>
+                        <ApprovedOrders />
                     </ManagerRoute>
                 ),
             },
@@ -157,7 +179,7 @@ export const router = createBrowserRouter([
             },
             // 💡 ড্যাশবোর্ড রুটের ভেতরে থাকলে /dashboard/track-order/:orderId না লিখে শুধু track-order/:orderId লিখুন।
             {
-                path: "track-order/:orderId",
+                path: "/dashboard/track-order/:orderId",
                 element: (
                     <BuyerRoute>
                         <TrackOrder />

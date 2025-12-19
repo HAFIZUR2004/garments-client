@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { motion } from "framer-motion";
+import LoadingSpinner from "../../components/LoadingSpinner"; // ✅ spinner import
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true); // ✅ loading state
 
   useEffect(() => {
     fetchUsers();
@@ -12,15 +15,17 @@ const ManageUsers = () => {
 
   const fetchUsers = async () => {
     try {
+      setLoading(true); // ✅ start loading
       const res = await axios.get("http://localhost:5000/api/users");
       setUsers(res.data);
     } catch (err) {
       console.error(err);
       Swal.fire("Error", "Failed to fetch users", "error");
+    } finally {
+      setLoading(false); // ✅ stop loading
     }
   };
 
-  // ✅ Approve User
   const handleApprove = async (id) => {
     try {
       await axios.put(`http://localhost:5000/api/users/${id}/status`, {
@@ -29,12 +34,10 @@ const ManageUsers = () => {
       Swal.fire("Approved!", "User approved successfully", "success");
       fetchUsers();
     } catch (err) {
-      console.error(err);
       Swal.fire("Error", "Failed to approve user", "error");
     }
   };
 
-  // ✅ Suspend User with Reason
   const handleSuspend = async (id) => {
     const { value: reason } = await Swal.fire({
       title: "Suspend Reason",
@@ -52,13 +55,11 @@ const ManageUsers = () => {
         Swal.fire("Suspended!", "User suspended successfully", "success");
         fetchUsers();
       } catch (err) {
-        console.error(err);
         Swal.fire("Error", "Failed to suspend user", "error");
       }
     }
   };
 
-  // ✅ Role Change (Dropdown)
   const handleRoleChange = async (id, newRole) => {
     try {
       await axios.put(`http://localhost:5000/api/users/${id}/role`, {
@@ -67,12 +68,10 @@ const ManageUsers = () => {
       Swal.fire("Updated!", "User role updated", "success");
       fetchUsers();
     } catch (err) {
-      console.error(err);
       Swal.fire("Error", "Failed to update role", "error");
     }
   };
 
-  // ✅ Make Admin Button (status stays pending)
   const makeAdmin = async (id) => {
     try {
       await axios.put(`http://localhost:5000/api/users/${id}/role`, {
@@ -81,7 +80,6 @@ const ManageUsers = () => {
       Swal.fire("Success!", "User is now Admin (status pending)", "success");
       fetchUsers();
     } catch (err) {
-      console.error(err);
       Swal.fire("Error", "Failed to make admin", "error");
     }
   };
@@ -90,11 +88,17 @@ const ManageUsers = () => {
     u.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-center">Manage Users</h2>
+  // ✅ ONLY spinner render
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
-      {/* 🔍 Search */}
+  return (
+    <div className="p-6 bg-gradient-to-r text-black from-purple-50 via-pink-50 to-yellow-50 min-h-screen">
+      <h2 className="text-4xl font-bold mb-6 text-center text-gray-900">
+        Manage Users
+      </h2>
+
       <div className="flex justify-center mb-6">
         <input
           type="text"
@@ -104,9 +108,9 @@ const ManageUsers = () => {
         />
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
+      <div className="overflow-x-auto rounded-xl shadow-xl bg-white">
         <table className="table w-full text-center">
-          <thead className="bg-gray-200 text-gray-800">
+          <thead className="bg-gradient-to-r from-purple-400 to-pink-400 text-white">
             <tr>
               <th>#</th>
               <th>Name</th>
@@ -118,26 +122,27 @@ const ManageUsers = () => {
           </thead>
 
           <tbody>
-            {filteredUsers.map((user, index) => (
-              <tr key={user._id} className="hover:bg-gray-100">
-                <td className="text-black">{index + 1}</td>
-
-                {/* Name */}
-                <td className="font-semibold text-black">
-                  {user.name || "No Name"}
+            {filteredUsers.length === 0 && (
+              <tr>
+                <td colSpan="6" className="py-6 text-gray-500">
+                  No users found
                 </td>
+              </tr>
+            )}
 
-                {/* Email */}
-                <td className="text-black">{user.email || "No Email"}</td>
+            {filteredUsers.map((user, index) => (
+              <motion.tr key={user._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <td>{index + 1}</td>
+                <td>{user.name || "No Name"}</td>
+                <td>{user.email}</td>
 
-                {/* Role Dropdown */}
                 <td>
                   <select
                     value={user.role}
                     onChange={(e) =>
                       handleRoleChange(user._id, e.target.value)
                     }
-                    className="select select-bordered select-sm text-white"
+                    className="select select-bordered select-sm"
                   >
                     <option value="buyer">Buyer</option>
                     <option value="manager">Manager</option>
@@ -145,10 +150,9 @@ const ManageUsers = () => {
                   </select>
                 </td>
 
-                {/* Status */}
                 <td>
                   <span
-                    className={`badge px-4 py-2 text-white ${
+                    className={`px-3 py-1 rounded-full text-white ${
                       user.status === "active"
                         ? "bg-green-500"
                         : user.status === "pending"
@@ -160,11 +164,10 @@ const ManageUsers = () => {
                   </span>
                 </td>
 
-                {/* Actions */}
-                <td className="flex justify-center gap-2 py-2">
+                <td className="flex gap-2 justify-center">
                   {user.status === "pending" && (
                     <button
-                      className="btn btn-xs btn-success"
+                      className="btn btn-success btn-xs"
                       onClick={() => handleApprove(user._id)}
                     >
                       Approve
@@ -173,7 +176,7 @@ const ManageUsers = () => {
 
                   {user.status !== "suspended" && (
                     <button
-                      className="btn btn-xs btn-error"
+                      className="btn btn-error btn-xs"
                       onClick={() => handleSuspend(user._id)}
                     >
                       Suspend
@@ -182,23 +185,15 @@ const ManageUsers = () => {
 
                   {user.role !== "admin" && (
                     <button
-                      className="btn btn-xs btn-primary"
+                      className="btn btn-primary btn-xs"
                       onClick={() => makeAdmin(user._id)}
                     >
                       Make Admin
                     </button>
                   )}
                 </td>
-              </tr>
+              </motion.tr>
             ))}
-
-            {filteredUsers.length === 0 && (
-              <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
-                  No users found
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>

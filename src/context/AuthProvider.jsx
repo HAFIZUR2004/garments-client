@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   onAuthStateChanged,
+  updateProfile,
 } from "firebase/auth";
 import axios from "axios";
 
@@ -17,9 +18,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const registerUser = (email, password) =>
-    createUserWithEmailAndPassword(auth, email, password);
-
+ const registerUser = async (email, password, name, photoURL) => {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  // ফায়ারবেস প্রোফাইল আপডেট করুন যাতে সাথে সাথে ছবি পাওয়া যায়
+  await updateProfile(result.user, {
+    displayName: name,
+    photoURL: photoURL
+  });
+  return result;
+};
   const loginUser = (email, password) =>
     signInWithEmailAndPassword(auth, email, password);
 

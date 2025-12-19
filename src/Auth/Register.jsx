@@ -1,12 +1,13 @@
+// src/pages/Register.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import { Eye, EyeOff } from "lucide-react";
-import { useAuth } from "../hooks/useAuth"; // ✅ hook import
+import { useAuth } from "../hooks/useAuth";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { registerUser } = useAuth(); // ✅ hook INSIDE component
+  const { registerUser } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,13 +33,8 @@ const Register = () => {
     }
 
     try {
-      // ✅ STEP 1: Firebase Register
-      const firebaseRes = await registerUser(email, password);
-      const firebaseUser = firebaseRes.user;
-
-      console.log("✅ Firebase User Created:", firebaseUser);
-
-      // ✅ STEP 2: Save User in MongoDB
+     const firebaseRes = await registerUser(email, password, name, photoURL);
+  const firebaseUser = firebaseRes.user;
       const res = await fetch("http://localhost:5000/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,23 +72,44 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 p-4">
-      <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md">
-        <h2 className="text-3xl font-extrabold mb-8 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-md relative">
+        <h2 className="text-3xl font-extrabold mb-8 text-center text-gray-800">
           Create Your Account
         </h2>
 
         <form onSubmit={handleRegister} className="flex flex-col gap-5">
-          <input type="text" placeholder="Name" value={name}
-            onChange={(e) => setName(e.target.value)} required className="input" />
+          <input
+            type="text"
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="border border-gray-300 rounded-lg p-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          />
 
-          <input type="email" placeholder="Email" value={email}
-            onChange={(e) => setEmail(e.target.value)} required className="input" />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="border border-gray-300 rounded-lg p-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          />
 
-          <input type="text" placeholder="Photo URL"
-            value={photoURL} onChange={(e) => setPhotoURL(e.target.value)} className="input" />
+          <input
+            type="text"
+            placeholder="Photo URL (optional)"
+            value={photoURL}
+            onChange={(e) => setPhotoURL(e.target.value)}
+            className="border border-gray-300 rounded-lg p-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          />
 
-          <select value={role} onChange={(e) => setRole(e.target.value)} className="input">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="border border-gray-300 rounded-lg p-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          >
             <option value="buyer">Buyer</option>
             <option value="manager">Manager</option>
           </select>
@@ -104,24 +121,27 @@ const Register = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="input"
+              className="border border-gray-300 rounded-lg p-3 w-full pr-12 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-400 outline-none transition"
             />
             <span
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 transition"
             >
               {showPassword ? <EyeOff /> : <Eye />}
             </span>
           </div>
 
-          <button type="submit" className="btn">
+          <button
+            type="submit"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-3 rounded-xl font-semibold shadow-md hover:scale-105 transform transition"
+          >
             Register
           </button>
         </form>
 
-        <p className="mt-6 text-center">
+        <p className="mt-6 text-center text-gray-600">
           Already have an account?{" "}
-          <Link to="/login" className="text-purple-600 font-semibold">
+          <Link to="/login" className="text-purple-600 font-semibold underline">
             Login
           </Link>
         </p>

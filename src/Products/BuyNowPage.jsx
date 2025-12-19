@@ -4,26 +4,26 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
-import Swal from 'sweetalert2'; 
+import Swal from 'sweetalert2';
 
-const API_BASE_URL = "http://localhost:5000/api/orders"; 
+const API_BASE_URL = "http://localhost:5000/api/orders";
 
 const BuyNowPage = () => {
     const { firebaseUser, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    
-    const product = location.state?.product; 
+
+    const product = location.state?.product;
 
     // স্টেট ইনিশিয়ালাইজেশন
-    const [quantity, setQuantity] = useState(product?.minimumOrder || 1); 
+    const [quantity, setQuantity] = useState(product?.minimumOrder || 1);
     const [firstName, setFirstName] = useState(user?.name.split(' ')[0] || "");
     const [lastName, setLastName] = useState(user?.name.split(' ').slice(1).join(' ') || "");
-    const [address, setAddress] = useState(""); 
-    const [contactNumber, setContactNumber] = useState(""); 
-    const [notes, setNotes] = useState(""); 
+    const [address, setAddress] = useState("");
+    const [contactNumber, setContactNumber] = useState("");
+    const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
-    
+
     // ✅ নতুন স্টেট: পেমেন্ট মেথড এখন ব্যবহারকারী নির্বাচন করবে
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
         product?.paymentOption === 'PayFirst' ? "PayFirst" : "Cash on Delivery"
@@ -36,10 +36,10 @@ const BuyNowPage = () => {
     // প্রাথমিক রিকোয়ারমেন্ট চেক
     if (!product) return <p className="text-red-500 container mx-auto px-6 py-12">Product not found! Please select a product from the All Products page.</p>;
     if (!firebaseUser) return <p className="text-red-500 container mx-auto px-6 py-12">Please login to continue.</p>;
-    
+
     const orderPrice = product.price * quantity;
-    
-    
+
+
     // Quantity হ্যান্ডলার (কোনো পরিবর্তন নেই, এটি ঠিক আছে)
     const handleQuantityChange = (e) => {
         const newQuantity = Number(e.target.value);
@@ -65,7 +65,7 @@ const BuyNowPage = () => {
                 orderData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            
+
             if (res.data.success) {
                 Swal.fire({
                     icon: 'success',
@@ -76,7 +76,7 @@ const BuyNowPage = () => {
                     navigate("/dashboard/my-orders");
                 });
             }
-            return res.data; 
+            return res.data;
         } catch (error) {
             const errorMessage = error.response?.data?.error || error.message || "Failed to place order";
             throw new Error(errorMessage);
@@ -84,14 +84,14 @@ const BuyNowPage = () => {
     }
 
     const handleBuyNow = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         setLoading(true);
-        
+
         // ক্লায়েন্ট সাইড ভ্যালিডেশন
         if (!firstName || !lastName || !address || !contactNumber || quantity < product.minimumOrder || quantity > product.availableQuantity) {
-             Swal.fire({ icon: 'error', title: 'Validation Failed', text: 'Please fill out all required fields and ensure quantity is valid.' });
-             setLoading(false);
-             return;
+            Swal.fire({ icon: 'error', title: 'Validation Failed', text: 'Please fill out all required fields and ensure quantity is valid.' });
+            setLoading(false);
+            return;
         }
 
         // ✅ বিকাশ ভ্যালিডেশন
@@ -109,17 +109,19 @@ const BuyNowPage = () => {
                 productId: product._id,
                 productName: product.name,
                 quantity,
-                orderPrice: orderPrice.toFixed(2), 
+                orderPrice: orderPrice.toFixed(2),
                 firstName,
                 lastName,
                 contactNumber,
                 address,
                 // ✅ notes ফিল্ডে bKash তথ্য যোগ করা হলো
-                notes: selectedPaymentMethod === "bKash" 
-                    ? `bKash Info: Number - ${bKashNumber}, Txn ID - ${bKashTxnId}. Additional notes: ${notes || ""}` 
+                sellerEmail: product.managerEmail || product.addedBy?.email,
+
+                notes: selectedPaymentMethod === "bKash"
+                    ? `bKash Info: Number - ${bKashNumber}, Txn ID - ${bKashTxnId}. Additional notes: ${notes || ""}`
                     : notes,
-                
-                paymentMethod: selectedPaymentMethod, 
+
+                paymentMethod: selectedPaymentMethod,
             };
 
             // 🎯 STEP 1: PayFirst (Online Payment via Stripe)
@@ -128,22 +130,23 @@ const BuyNowPage = () => {
 
                 const paymentRes = await axios.post(
                     `${API_BASE_URL}/create-checkout-session`,
-                    { orderData },
+                    { orderData: { ...orderData, sellerEmail: orderData.sellerEmail } },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
 
+
                 if (paymentRes.data.url) {
-                    window.location.href = paymentRes.data.url; 
+                    window.location.href = paymentRes.data.url;
                 } else {
                     throw new Error("Failed to get payment URL.");
                 }
-            } 
+            }
             // 🎯 STEP 2: Cash on Delivery (COD) বা bKash - সরাসরি অর্ডার প্লেস
             else if (selectedPaymentMethod === "Cash on Delivery" || selectedPaymentMethod === "bKash") {
                 await handlePlaceOrder(orderData);
-            } 
+            }
             else {
-                throw new Error("Invalid payment method selected."); 
+                throw new Error("Invalid payment method selected.");
             }
 
         } catch (err) {
@@ -156,14 +159,14 @@ const BuyNowPage = () => {
             }
         }
     };
-    
+
     // UI কোড
     return (
         <div className="container mx-auto px-6 py-12">
             <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Complete Your Order: {product.name}</h2>
-            
+
             <form onSubmit={handleBuyNow} className="bg-amber-400 text-black shadow-lg rounded-lg p-6 space-y-4">
-                
+
                 {/* User Info */}
                 <div className="bg-gray-50 p-4 rounded-md">
                     <h3 className="text-xl font-semibold mb-2">Buyer Information</h3>
@@ -178,17 +181,17 @@ const BuyNowPage = () => {
                     <p><strong>Unit Price:</strong> ${product.price} (Read-Only)</p>
                     <p><strong>Min. Order:</strong> {product.minimumOrder}</p>
                     <p><strong>Available:</strong> {product.availableQuantity}</p>
-                    
+
                     <p className={`font-bold mt-2 ${selectedPaymentMethod === 'PayFirst' ? 'text-green-600' : selectedPaymentMethod === 'bKash' ? 'text-pink-600' : 'text-orange-600'}`}>
                         Current Payment Method: {selectedPaymentMethod}
                     </p>
                 </div>
-                
+
                 {/* --------------------- পেমেন্ট মেথড সিলেক্ট করার সেকশন --------------------- */}
                 <div className="bg-white p-4 rounded-md border border-gray-300">
                     <h3 className="text-xl font-semibold mb-3">Select Payment Method</h3>
                     <div className="flex flex-wrap gap-4">
-                        
+
                         {/* 1. PayFirst (Stripe) */}
                         {product.paymentOption === 'PayFirst' && (
                             <label className="flex items-center space-x-2">
@@ -203,7 +206,7 @@ const BuyNowPage = () => {
                                 <span>PayFirst (Credit/Debit Card)</span>
                             </label>
                         )}
-                        
+
                         {/* 2. Cash on Delivery */}
                         <label className="flex items-center space-x-2">
                             <input
@@ -235,7 +238,7 @@ const BuyNowPage = () => {
                     {selectedPaymentMethod === "bKash" && (
                         <div className="mt-4 p-3 border border-pink-300 rounded-md bg-pink-50 space-y-3">
                             <p className="font-semibold text-pink-700">Please send **${orderPrice.toFixed(2)}** to our bKash merchant number (e.g., **01XXXXXXXXX**)</p>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Your bKash Mobile Number:</label>
                                 <input
@@ -262,7 +265,7 @@ const BuyNowPage = () => {
                     )}
                 </div>
                 {/* -------------------------------------------------------------------------- */}
-                
+
                 {/* First Name এবং Last Name */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -301,7 +304,7 @@ const BuyNowPage = () => {
                     />
                     <p className="text-sm text-gray-500 mt-1">Order must be between {product.minimumOrder} and {product.availableQuantity}</p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number:</label>
@@ -345,17 +348,17 @@ const BuyNowPage = () => {
                 </div>
 
                 <button
-                    type="submit" 
+                    type="submit"
                     disabled={
-                        loading || 
-                        quantity < product.minimumOrder || 
-                        quantity > product.availableQuantity || 
-                        !firstName || 
-                        !lastName || 
-                        !address || 
+                        loading ||
+                        quantity < product.minimumOrder ||
+                        quantity > product.availableQuantity ||
+                        !firstName ||
+                        !lastName ||
+                        !address ||
                         !contactNumber ||
                         // বিকাশ সিলেক্ট করা থাকলে, তার ফিল্ডগুলোও চেক করতে হবে
-                        (selectedPaymentMethod === "bKash" && (!bKashTxnId || !bKashNumber)) 
+                        (selectedPaymentMethod === "bKash" && (!bKashTxnId || !bKashNumber))
                     }
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-md transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
