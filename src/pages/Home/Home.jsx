@@ -42,7 +42,7 @@ const Home = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://localhost:5000/api/products");
+        const res = await axios.get("https://garments-server-omega.vercel.app/api/products");
         setProducts(res.data || []);
       } catch (err) {
         console.error(err);

@@ -16,7 +16,7 @@ const ManageUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true); // ✅ start loading
-      const res = await axios.get("http://localhost:5000/api/users");
+      const res = await axios.get("https://garments-server-omega.vercel.app/api/users");
       setUsers(res.data);
     } catch (err) {
       console.error(err);
@@ -28,7 +28,7 @@ const ManageUsers = () => {
 
   const handleApprove = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/api/users/${id}/status`, {
+      await axios.put(`https://garments-server-omega.vercel.app/api/users/${id}/status`, {
         status: "active",
       });
       Swal.fire("Approved!", "User approved successfully", "success");
@@ -48,7 +48,7 @@ const ManageUsers = () => {
 
     if (reason) {
       try {
-        await axios.put(`http://localhost:5000/api/users/${id}/status`, {
+        await axios.put(`https://garments-server-omega.vercel.app/api/users/${id}/status`, {
           status: "suspended",
           suspendReason: reason,
         });
@@ -62,7 +62,7 @@ const ManageUsers = () => {
 
   const handleRoleChange = async (id, newRole) => {
     try {
-      await axios.put(`http://localhost:5000/api/users/${id}/role`, {
+      await axios.put(`https://garments-server-omega.vercel.app/api/users/${id}/role`, {
         role: newRole,
       });
       Swal.fire("Updated!", "User role updated", "success");
@@ -74,7 +74,7 @@ const ManageUsers = () => {
 
   const makeAdmin = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/api/users/${id}/role`, {
+      await axios.put(`https://garments-server-omega.vercel.app/api/users/${id}/role`, {
         role: "admin",
       });
       Swal.fire("Success!", "User is now Admin (status pending)", "success");

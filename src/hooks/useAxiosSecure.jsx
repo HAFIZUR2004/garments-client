@@ -2,7 +2,7 @@ import axios from "axios";
 
 const useAxiosSecure = () => {
   const instance = axios.create({
-    baseURL: "http://localhost:5000",
+    baseURL: "https://garments-server-omega.vercel.app",
   });
 
   // Attach token to every request

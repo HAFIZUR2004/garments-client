@@ -33,9 +33,9 @@ const AdminDashboardHome = () => {
 
   const fetchStats = async () => {
     try {
-      const usersRes = await axios.get("http://localhost:5000/api/users");
-      const productsRes = await axios.get("http://localhost:5000/api/products");
-      const ordersRes = await axios.get("http://localhost:5000/api/orders");
+      const usersRes = await axios.get("https://garments-server-omega.vercel.app/api/users");
+      const productsRes = await axios.get("https://garments-server-omega.vercel.app/api/products");
+      const ordersRes = await axios.get("https://garments-server-omega.vercel.app/api/orders");
 
       const users = usersRes.data || [];
       const products = productsRes.data || [];

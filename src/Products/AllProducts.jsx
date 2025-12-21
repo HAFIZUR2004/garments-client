@@ -15,7 +15,7 @@ const AllProducts = () => {
       try {
         setLoading(true);
         setError("");
-        const res = await axios.get("http://localhost:5000/api/products/all");
+        const res = await axios.get("https://garments-server-omega.vercel.app/api/products/all");
         setProducts(res.data || []);
       } catch (err) {
         setError("Failed to load products");

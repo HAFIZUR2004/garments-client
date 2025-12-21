@@ -10,7 +10,7 @@ import app from '../firebase/firebase.config';
 
 // কনফিগারেশন
 const storage = getStorage(app); 
-const API_BASE_URL = "http://localhost:5000/api/users"; 
+const API_BASE_URL = "https://garments-server-omega.vercel.app/api/users"; 
 
 const ProfilePage = () => {
     const { firebaseUser, userProfile, loading, refetchUserProfile } = useAuth();

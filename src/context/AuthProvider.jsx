@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem("token", token);
 
           const res = await axios.get(
-            `http://localhost:5000/api/users/by-email/${currentUser.email}`,
+            `https://garments-server-omega.vercel.app/api/users/by-email/${currentUser.email}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           setUser(res.data);

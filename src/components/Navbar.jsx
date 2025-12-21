@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react"; // useRef যোগ করা হয়েছে
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { FiHome, FiBox, FiInfo, FiPhone, FiLogIn, FiUserPlus, FiLogOut, FiGrid, FiMenu, FiX } from "react-icons/fi";
@@ -6,9 +6,30 @@ import defaultAvatar from "../assets/avater.jpg";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
-  const { user, loading, logOut } = useAuth();
+  // useAuth থেকে firebaseUser বা userProfile আছে কিনা চেক করুন
+  // আপনার DashboardNavbar এ firebaseUser ব্যবহার করা হয়েছে, এখানেও তাই করার চেষ্টা করুন
+  const { user, firebaseUser, userProfile, loading, logOut } = useAuth(); 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdown, setProfileDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // ইউজার ডেটা কনসোলিডেশন (DashboardNavbar এর মতো)
+  const userData = {
+    name: user?.displayName || firebaseUser?.displayName || userProfile?.name || "User",
+    email: user?.email || firebaseUser?.email || "N/A",
+    photoURL: user?.photoURL || firebaseUser?.photoURL || userProfile?.photoURL || defaultAvatar,
+  };
+
+  // ক্লিকের বাইরে ড্রপডাউন বন্ধ করার লজিক
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setProfileDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (loading) return null;
 
@@ -29,14 +50,13 @@ const Navbar = () => {
   return (
     <nav className="w-full bg-white shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-50">
       
-      {/* --- LEFT SECTION: Logo & Mobile Menu Toggle --- */}
+      {/* --- LEFT SECTION --- */}
       <div className="flex items-center gap-3">
-        {/* Mobile Hamburger Button (Only shows on mobile) */}
         <button
           className="lg:hidden text-gray-700 p-1"
           onClick={() => {
             setMobileMenuOpen(!mobileMenuOpen);
-            setProfileDropdown(false); // প্রোফাইল খোলা থাকলে বন্ধ করে দিবে
+            setProfileDropdown(false);
           }}
         >
           {mobileMenuOpen ? <FiX size={26} /> : <FiMenu size={26} />}
@@ -47,7 +67,7 @@ const Navbar = () => {
         </Link>
       </div>
 
-      {/* --- CENTER SECTION: Navigation Links (Desktop + Mobile Dropdown) --- */}
+      {/* --- CENTER SECTION --- */}
       <div className={`
         absolute lg:static top-[60px] left-0 w-full lg:w-auto bg-white lg:bg-transparent 
         shadow-lg lg:shadow-none transition-all duration-300 ease-in-out z-40
@@ -79,16 +99,24 @@ const Navbar = () => {
       {/* --- RIGHT SECTION: Profile & Auth --- */}
       <div className="flex items-center gap-4">
         {user ? (
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => {
                 setProfileDropdown(!profileDropdown);
-                setMobileMenuOpen(false); // মেনু খোলা থাকলে বন্ধ করে দিবে
+                setMobileMenuOpen(false);
               }}
               className="flex items-center gap-2 focus:outline-none p-1 rounded-full border-2 border-transparent hover:border-blue-500 transition"
             >
-              <img src={user?.photoURL || defaultAvatar} alt="user" className="w-9 h-9 rounded-full object-cover" />
-              <span className="hidden md:inline font-medium text-gray-700">{user?.displayName?.split(' ')[0]}</span>
+              {/* userData.photoURL ব্যবহার করা হয়েছে */}
+              <img 
+                src={userData.photoURL} 
+                alt="user" 
+                className="w-9 h-9 rounded-full object-cover border border-gray-200"
+                onError={(e) => { e.target.src = defaultAvatar; }} // ইমেজ লোড না হলে ডিফল্টটা দেখাবে
+              />
+              <span className="hidden md:inline font-medium text-gray-700">
+                {userData.name.split(' ')[0]}
+              </span>
             </button>
 
             <AnimatePresence>
@@ -100,9 +128,13 @@ const Navbar = () => {
                   className="absolute right-0 mt-3 w-72 bg-white shadow-2xl rounded-xl z-50 border border-gray-100 overflow-hidden"
                 >
                   <div className="p-5 bg-blue-50 flex flex-col items-center text-center">
-                    <img src={user?.photoURL || defaultAvatar} alt="user" className="w-16 h-16 rounded-full border-4 border-white shadow-sm mb-2" />
-                    <span className="font-bold text-gray-800">{user?.displayName}</span>
-                    <span className="text-xs text-gray-500">{user?.email}</span>
+                    <img 
+                      src={userData.photoURL} 
+                      alt="user" 
+                      className="w-16 h-16 rounded-full border-4 border-white shadow-sm mb-2 object-cover" 
+                    />
+                    <span className="font-bold text-gray-800">{userData.name}</span>
+                    <span className="text-xs text-gray-500">{userData.email}</span>
                   </div>
                   
                   <div className="p-2">
@@ -126,7 +158,7 @@ const Navbar = () => {
           </div>
         ) : (
           <div className="hidden lg:flex gap-2">
-            {/* Desktop Auth buttons (If needed when not logged in) */}
+            {/* Login/Register buttons for desktop if needed */}
           </div>
         )}
       </div>
@@ -135,3 +167,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+// amr sonar bangal

@@ -14,7 +14,7 @@ const ProductDetails = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/products/${id}`)
+      .get(`https://garments-server-omega.vercel.app/api/products/${id}`)
       .then((res) => setProduct(res.data))
       .catch(() => setError("Failed to load product"))
       .finally(() => setLoading(false));

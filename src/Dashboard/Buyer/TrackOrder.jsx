@@ -15,7 +15,7 @@ const TrackOrder = () => {
     if (!firebaseUser) return;
 
     axios
-      .get(`http://localhost:5000/api/orders/track/${orderId}`, {
+      .get(`https://garments-server-omega.vercel.app/api/orders/track/${orderId}`, {
         headers: {
           Authorization: `Bearer ${firebaseUser.accessToken}`
         }

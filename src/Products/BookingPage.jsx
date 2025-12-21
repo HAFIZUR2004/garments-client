@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import { useAuth } from "../hooks/useAuth";
 import useUserRole from "../hooks/useUserRole";
 
-const API_BASE_URL = "http://localhost:5000/api/orders";
+const API_BASE_URL = "https://garments-server-omega.vercel.app/api/orders";
 const BKASH_MERCHANT_NUMBER = "017XXXXXXXX";
 
 const BookingPage = () => {

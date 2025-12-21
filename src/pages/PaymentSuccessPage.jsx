@@ -7,7 +7,7 @@ import { useAuth } from "../hooks/useAuth";
 import Swal from 'sweetalert2';
 
 // ✅ আপনার API Base URL সেট করুন
-const API_BASE_URL = "http://localhost:5000/api/orders";
+const API_BASE_URL = "https://garments-server-omega.vercel.app/api/orders";
 
 const PaymentSuccessPage = () => {
   const { firebaseUser } = useAuth();

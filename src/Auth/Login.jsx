@@ -13,7 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const backendUrl = "http://localhost:5000";
+  const backendUrl = "https://garments-server-omega.vercel.app";
 
   const handleLogin = async (e) => {
     e.preventDefault();

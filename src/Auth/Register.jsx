@@ -35,7 +35,7 @@ const Register = () => {
     try {
      const firebaseRes = await registerUser(email, password, name, photoURL);
   const firebaseUser = firebaseRes.user;
-      const res = await fetch("http://localhost:5000/api/users/register", {
+      const res = await fetch("https://garments-server-omega.vercel.app/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

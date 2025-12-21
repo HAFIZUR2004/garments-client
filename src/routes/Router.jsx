@@ -40,6 +40,7 @@ import ProfilePage from "../Dashboard/ProfilePage.jsx";
 import ManageProducts from "../Dashboard/Manager/ManageProducts.jsx";
 import AboutUs from "../pages/AboutUs.jsx";
 import Contact from "../pages/Contact.jsx";
+import ErrorPage from "../pages/ErrorPage.jsx";
 
 export const router = createBrowserRouter([
     // ================= PUBLIC ROUTES =================
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
             { path: "allproducts", element: <AllProducts /> },
             { path: "about", element: <AboutUs/>},
             { path: "contact", element: <Contact/> },
+            { path: "/*", element: <ErrorPage/>},
 
             {
                 path: "product/:id",

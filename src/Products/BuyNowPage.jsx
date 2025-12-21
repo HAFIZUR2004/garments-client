@@ -6,7 +6,7 @@ import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import Swal from 'sweetalert2';
 
-const API_BASE_URL = "http://localhost:5000/api/orders";
+const API_BASE_URL = "https://garments-server-omega.vercel.app/api/orders";
 
 const BuyNowPage = () => {
     const { firebaseUser, user } = useAuth();
